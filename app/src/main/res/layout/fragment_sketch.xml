@@ -21,21 +21,24 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clipToPadding="false"
-    android:fitsSystemWindows="false" >
+    android:fitsSystemWindows="false">
+
 
     <LinearLayout
+
         android:id="@+id/drawing_question"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#FFFFFF"
-        android:orientation="vertical" >
+        android:orientation="vertical">
+
 
         <LinearLayout
             android:id="@+id/eraserView"
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:orientation="horizontal"
-            android:padding="4dp" >
+            android:padding="4dp">
 
             <ImageView
                 android:id="@+id/sketch_stroke"
@@ -110,13 +113,54 @@
                 android:src="@drawable/ic_delete_grey600_48dp" />
         </LinearLayout>
 
-        <com.zhangyp.higo.drawingboard.view.SketchView
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/drawing"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
 
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#efeded">
+
+
+            <ImageView
+
+                android:id="@+id/iv_bg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center" />
+
+            <ImageView
+                android:id="@+id/iv_bg_color"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center" />
+
+            <com.zhangyp.higo.drawingboard.view.SketchView xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/drawing"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:background="#fff" />
+
+        </FrameLayout>
+
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_gravity="bottom"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/bt_show_bg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="原图"/>
+        <Button
+            android:id="@+id/bt_show_bg_gray"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="手绘图"/>
     </LinearLayout>
 
 </FrameLayout>

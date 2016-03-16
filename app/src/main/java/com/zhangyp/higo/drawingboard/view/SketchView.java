@@ -29,11 +29,12 @@ import android.util.Pair;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.widget.ImageView;
 
 import java.util.ArrayList;
 
 
-public class SketchView extends View implements OnTouchListener {
+public class SketchView extends ImageView implements OnTouchListener {
 
     private static final float TOUCH_TOLERANCE = 4;
 

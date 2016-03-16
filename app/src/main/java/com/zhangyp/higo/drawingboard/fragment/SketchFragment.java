@@ -17,10 +17,12 @@
 
 package com.zhangyp.higo.drawingboard.fragment;
 
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -38,7 +40,10 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
+import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.PopupWindow;
 import android.widget.SeekBar;
@@ -65,6 +70,8 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import jp.co.cyberagent.android.gpuimage.GPUImage;
+import jp.co.cyberagent.android.gpuimage.GPUImageSketchFilter;
 
 
 public class SketchFragment extends Fragment implements SketchView.OnDrawChangedListener {
@@ -85,7 +92,18 @@ public class SketchFragment extends Fragment implements SketchView.OnDrawChanged
     ImageView sketchSave;
     @Bind(R.id.sketch_photo)
     ImageView sketchPhoto;
-
+    @Bind(R.id.eraserView)
+    LinearLayout eraserView;
+    @Bind(R.id.iv_bg)
+    ImageView ivBg;
+    @Bind(R.id.drawing_question)
+    LinearLayout drawingQuestion;
+    @Bind(R.id.iv_bg_color)
+    ImageView ivBgColor;
+    @Bind(R.id.bt_show_bg)
+    Button btShowBg;
+    @Bind(R.id.bt_show_bg_gray)
+    Button btShowBgGray;
 
 
     private int seekBarStrokeProgress, seekBarEraserProgress;
@@ -96,6 +114,9 @@ public class SketchFragment extends Fragment implements SketchView.OnDrawChanged
     private int oldColor;
     private MaterialDialog dialog;
     private Bitmap bitmap;
+    private int mScreenWidth;
+    private int mScreenHeight;
+    private float density;
 
 
     @Override
@@ -120,6 +141,18 @@ public class SketchFragment extends Fragment implements SketchView.OnDrawChanged
         View view = inflater.inflate(R.layout.fragment_sketch, container, false);
         ButterKnife.bind(this, view);
 
+        density = getResources().getDisplayMetrics().density;
+
+        DisplayMetrics dm = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
+        // 获取屏幕分辨率宽度
+        mScreenWidth = dm.widthPixels;
+        mScreenHeight = dm.heightPixels;
+
+        FrameLayout.LayoutParams p = (FrameLayout.LayoutParams) mSketchView.getLayoutParams();
+        p.width = mScreenWidth;
+        p.height = mScreenWidth;
+        mSketchView.setLayoutParams(p);
 
 
         return view;
@@ -206,8 +239,8 @@ public class SketchFragment extends Fragment implements SketchView.OnDrawChanged
         sketchSave.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mSketchView.getPaths().size() == 0){
-                    Toast.makeText(getActivity(),"你还没有手绘",Toast.LENGTH_SHORT).show();
+                if (mSketchView.getPaths().size() == 0) {
+                    Toast.makeText(getActivity(), "你还没有手绘", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 //保存
@@ -219,7 +252,7 @@ public class SketchFragment extends Fragment implements SketchView.OnDrawChanged
                             @Override
                             public void onInput(MaterialDialog dialog, CharSequence input) {
                                 // Do something
-                                Log.i("AAA",input.toString());
+                                Log.i("AAA", input.toString());
 
                                 save(input.toString());
                             }
@@ -241,11 +274,14 @@ public class SketchFragment extends Fragment implements SketchView.OnDrawChanged
                                 .placeholder(com.yancy.imageselector.R.mipmap.imageselector_photo)
                                 .centerCrop()
                                 .into(imageView);
-                    }})
+                    }
+                })
                         .steepToolBarColor(getResources().getColor(R.color.blue))
                         .titleBgColor(getResources().getColor(R.color.blue))
                         .titleSubmitTextColor(getResources().getColor(R.color.white))
                         .titleTextColor(getResources().getColor(R.color.white))
+                        //截屏
+//                        .crop()
                         // 开启单选   （默认为多选）
                         .singleSelect()
                         // 开启拍照功能 （默认关闭）
@@ -326,14 +362,14 @@ public class SketchFragment extends Fragment implements SketchView.OnDrawChanged
 
     public void save(final String imgName) {
         dialog = new MaterialDialog.Builder(getActivity())
-                 .title("保存手绘")
-                 .content("保存中...")
-                 .progress(true, 0)
-                 .progressIndeterminateStyle(true)
-                 .show();
+                .title("保存手绘")
+                .content("保存中...")
+                .progress(true, 0)
+                .progressIndeterminateStyle(true)
+                .show();
         bitmap = mSketchView.getBitmap();
 
-        new AsyncTask(){
+        new AsyncTask() {
 
             @Override
             protected Object doInBackground(Object[] params) {
@@ -372,7 +408,7 @@ public class SketchFragment extends Fragment implements SketchView.OnDrawChanged
             protected void onPostExecute(Object o) {
                 super.onPostExecute(o);
 
-                Toast.makeText(getActivity(),(String)o, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), (String) o, Toast.LENGTH_SHORT).show();
 
             }
         }.execute("");
@@ -489,7 +525,7 @@ public class SketchFragment extends Fragment implements SketchView.OnDrawChanged
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        if (requestCode == ImageSelector.IMAGE_REQUEST_CODE && resultCode == Activity.RESULT_OK &&  data != null) {
+        if (requestCode == ImageSelector.IMAGE_REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
 
             // Get Image Path List
             List<String> pathList = data.getStringArrayListExtra(ImageSelectorActivity.EXTRA_RESULT);
@@ -498,7 +534,6 @@ public class SketchFragment extends Fragment implements SketchView.OnDrawChanged
                 Log.i("ImagePathList", path);
                 Glide.with(this).load(path)
                         .asBitmap()
-                        .fitCenter()
                         .centerCrop()
                         .into(new SimpleTarget<Bitmap>() {
 
@@ -506,8 +541,7 @@ public class SketchFragment extends Fragment implements SketchView.OnDrawChanged
                             public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
                                 // Do something with bitmap here.
 
-                                mSketchView.setBackgroundBitmap(getActivity(),resource);
-                                mSketchView.invalidate();
+                                init(resource);
 
                             }
 
@@ -516,4 +550,63 @@ public class SketchFragment extends Fragment implements SketchView.OnDrawChanged
         }
 
     }
+
+    private void init(Bitmap bitmap) {
+
+        float scaleRatio = 1;
+
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+
+
+        float screenRatio = 1.0f;
+        float imgRatio = (float) height / (float) width;
+        if (imgRatio >= screenRatio) {
+            //高度大于屏幕，以高为准
+
+            scaleRatio = (float) mScreenWidth / (float) height;
+
+        }
+
+        if (imgRatio < screenRatio) {
+            scaleRatio = (float) mScreenWidth / (float) width;
+
+        }
+
+        Matrix matrix = new Matrix();
+        matrix.postScale(scaleRatio, scaleRatio);
+        Bitmap dstbmp = Bitmap.createBitmap(bitmap, 0, 0, width, height,
+                matrix, true);
+
+        GPUImage gpuImage = new GPUImage(getActivity());
+        gpuImage.setFilter(new GPUImageSketchFilter());
+        final Bitmap grayBmp = gpuImage.getBitmapWithFilterApplied(dstbmp);
+
+        ivBg.setImageBitmap(grayBmp);
+        mSketchView.getBackground().setAlpha(150);
+
+        ivBgColor.setImageBitmap(dstbmp);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(ivBgColor, "alpha", 1.0f, 0.0f);
+        alpha.setDuration(2000).start();
+
+        btShowBg.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ObjectAnimator alpha = ObjectAnimator.ofFloat(ivBgColor, "alpha", 0.0f, 1.0f);
+                alpha.setDuration(1000).start();
+
+            }
+        });
+        btShowBgGray.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ObjectAnimator alpha = ObjectAnimator.ofFloat(ivBgColor, "alpha", 1.0f, 0.0f);
+                alpha.setDuration(1000).start();
+
+            }
+        });
+
+
+    }
+
 }
