@@ -1,7 +1,176 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/fl_main">
+    android:background="@color/concrete"
+    android:orientation="vertical"
+    tools:context="com.zyp.draw.MainActivity">
+
+    <com.zyp.draw.view.DrawingBoardView
+        android:layout_gravity="center_vertical"
+        android:id="@+id/drawingBoardView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|end"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/bt_draw_sketch"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:text="描线"
+            android:textSize="10dp"/>
+
+        <Button
+            android:id="@+id/bt_draw_colours"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:text="绘色"
+            android:textSize="10dp"/>
+        <Button
+            android:id="@+id/bt_add"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:text="+"/>
+
+        <Button
+            android:id="@+id/bt_subtrct"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:text="-"/>
+
+
+        <Button
+            android:id="@+id/bt_save"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:text="查看"
+            android:textSize="10dp"/>
+
+    </LinearLayout>
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="140dp"
+        android:layout_gravity="bottom"
+        android:background="@color/gray">
+
+        <com.zyp.draw.view.MoveRegionView
+            android:id="@+id/iv_touch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_margin="20dp"
+                android:background="@mipmap/direction"/>
+
+        </com.zyp.draw.view.MoveRegionView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_toRightOf="@+id/iv_touch"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true">
+
+                <ImageView
+                    android:id="@+id/iv_image_selector"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:layout_weight="1"
+                    android:src="@mipmap/ic_photo_dark"/>
+
+                <ImageView
+                    android:id="@+id/iv_delete"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:layout_weight="1"
+                    android:src="@mipmap/ic_delete"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true">
+
+                <ImageView
+                    android:id="@+id/iv_eraser"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:layout_weight="1"
+                    android:alpha="0.5"
+                    android:src="@mipmap/ic_eraser"/>
+
+                <FrameLayout
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/iv_brush"
+                        android:layout_width="match_parent"
+                        android:layout_height="45dp"
+                        android:layout_weight="1"
+                        android:alpha="1"
+                        android:src="@mipmap/ic_brush"/>
+
+                    <View
+                        android:layout_gravity="center_vertical|end"
+                        android:id="@+id/view_color"
+                        android:layout_margin="5dp"
+                        android:background="@color/black"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"/>
+                </FrameLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true">
+
+                <ImageView
+                    android:id="@+id/iv_undo"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:layout_weight="1"
+                    android:alpha="0.5"
+                    android:src="@mipmap/ic_undo"/>
+
+                <ImageView
+                    android:id="@+id/iv_redo"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:layout_weight="1"
+                    android:alpha="0.5"
+                    android:src="@mipmap/ic_redo"/>
+
+            </LinearLayout>
+        </LinearLayout>
+
+
+    </RelativeLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:id="@+id/view_popu"/>
 
 </FrameLayout>
