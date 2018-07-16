@@ -39,5 +39,10 @@ dependencies {
     implementation files('libs/universal-image-loader-1.9.5.jar')
     implementation 'com.commit451:PhotoView:1.2.4'
 
+    implementation('com.jakewharton:butterknife:8.5.1') {
+        exclude module: 'support-compat' //exclude module: 'support-annotations'
+    }
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
+
 //    implementation 'com.github.chrisbanes:PhotoView:+'
 }

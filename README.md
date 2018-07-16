@@ -1,6 +1,8 @@
 ###Drawingboard
 
 
-![Screenshot_1](./DrawingBoard.gif)
-![Screenshot_1](./Screenshot_1.jpg)
-![Screenshot_2](./Screenshot_2.jpg)
+![boy_gif](./art/boy.gif)
+
+![boy_color](./art/boy_color.png)
+
+![boy_sketch](./art/boy_sketch.png)

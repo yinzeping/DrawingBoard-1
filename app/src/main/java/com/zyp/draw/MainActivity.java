@@ -7,13 +7,14 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -33,15 +34,50 @@ import com.yancy.imageselector.ImageSelector;
 import com.yancy.imageselector.ImageSelectorActivity;
 import com.zyp.draw.view.DrawingBoardView;
 import com.zyp.draw.view.MoveRegionView;
+
 import java.util.List;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+/**
+ * Created by zhangyiipeng on 2018/7/6.
+ */
 
 public class MainActivity extends AppCompatActivity {
 
-    private MoveRegionView mIvTouch;
-    private DrawingBoardView mDrawingBoardView;
+    @BindView(R.id.drawingBoardView)
+    DrawingBoardView drawingBoardView;
+    @BindView(R.id.bt_draw_sketch)
+    Button btDrawSketch;
+    @BindView(R.id.bt_draw_colours)
+    Button btDrawColours;
+    @BindView(R.id.bt_zoom_up)
+    Button btZoomUp;
+    @BindView(R.id.bt_zoom_down)
+    Button btZoomDown;
+    @BindView(R.id.bt_save)
+    Button btSave;
+    @BindView(R.id.iv_touch)
+    MoveRegionView ivTouch;
+    @BindView(R.id.iv_image_selector)
+    ImageView ivImageSelector;
+    @BindView(R.id.iv_delete)
+    ImageView ivDelete;
+    @BindView(R.id.iv_eraser)
+    ImageView ivEraser;
+    @BindView(R.id.iv_brush)
+    ImageView ivBrush;
+    @BindView(R.id.view_color)
+    View viewColor;
+    @BindView(R.id.iv_undo)
+    ImageView ivUndo;
+    @BindView(R.id.iv_redo)
+    ImageView ivRedo;
+    @BindView(R.id.view_popu)
+    View viewPopu;
 
     public static Bitmap bitmap;
-    private View viewColor;
 
     @Override
     protected void onDestroy() {
@@ -53,176 +89,58 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
-
-        mDrawingBoardView = findViewById(R.id.drawingBoardView);
-        mIvTouch = findViewById(R.id.iv_touch);
-
-        mIvTouch.setTouchMoveListener(new MoveRegionView.OnTouchMoveListener() {
+        ivTouch.setTouchMoveListener(new MoveRegionView.OnTouchMoveListener() {
             @Override
             public void onTouchMove(float mx, float my) {
-                mDrawingBoardView.moveCanvas(mx, my);
+                drawingBoardView.moveCanvas(mx, my);
 
             }
         });
-
-        findViewById(R.id.bt_add).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mDrawingBoardView.zoomCanvas(true);
-
-            }
-        });
-        findViewById(R.id.bt_subtrct).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mDrawingBoardView.zoomCanvas(false);
-
-            }
-        });
-
-        findViewById(R.id.bt_add).setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                mDrawingBoardView.zoomQuickCanvas(true);
-                return true;
-            }
-        });
-
-        findViewById(R.id.bt_subtrct).setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                mDrawingBoardView.zoomQuickCanvas(false);
-                return true;
-            }
-        });
-
-        findViewById(R.id.bt_subtrct).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mDrawingBoardView.zoomCanvas(false);
-
-            }
-        });
-
-        final ImageView ivUndo = findViewById(R.id.iv_undo);
-        ivUndo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mDrawingBoardView.undo();
-            }
-        });
-
-        final ImageView ivRedo = findViewById(R.id.iv_redo);
-
-        ivRedo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mDrawingBoardView.redo();
-            }
-        });
-
-        mDrawingBoardView.setOnUndoRedoListener(new DrawingBoardView.OnUndoRedoListener() {
+        drawingBoardView.setOnUndoRedoListener(new DrawingBoardView.OnUndoRedoListener() {
             @Override
             public void onUndoRedo(boolean isUndo, boolean isRedo) {
-                Log.d("UNDO","isUndo:"+isUndo+",isRedo:"+isRedo);
-                if (isUndo){
-                    if (ivUndo.getAlpha()<1f) {
+                Log.d("UNDO", "isUndo:" + isUndo + ",isRedo:" + isRedo);
+                if (isUndo) {
+                    if (ivUndo.getAlpha() < 1f) {
                         ivUndo.setAlpha(1f);
                     }
-                }else {
-                    if(ivUndo.getAlpha() == 1f) {
+                } else {
+                    if (ivUndo.getAlpha() == 1f) {
                         ivUndo.setAlpha(0.5f);
                     }
                 }
-                if (isRedo){
-                    if (ivRedo.getAlpha()<1f) {
+                if (isRedo) {
+                    if (ivRedo.getAlpha() < 1f) {
                         ivRedo.setAlpha(1f);
                     }
-                }else {
-                    if(ivRedo.getAlpha() == 1f) {
+                } else {
+                    if (ivRedo.getAlpha() == 1f) {
                         ivRedo.setAlpha(0.5f);
                     }
                 }
             }
         });
-        findViewById(R.id.iv_image_selector).setOnClickListener(new View.OnClickListener() {
+
+        btZoomUp.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public void onClick(View v) {
-                openImageSelector();
+            public boolean onLongClick(View v) {
+                drawingBoardView.zoomUpQuickCanvas();
+                return true;
             }
         });
-        findViewById(R.id.bt_draw_sketch).setOnClickListener(new View.OnClickListener() {
+        btZoomDown.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public void onClick(View v) {
-                mDrawingBoardView.drawSketch();
-            }
-        });
-        findViewById(R.id.bt_draw_colours).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mDrawingBoardView.drawColours();
+            public boolean onLongClick(View v) {
+                drawingBoardView.zoomDownQuickCanvas();
+                return true;
             }
         });
 
-        findViewById(R.id.iv_delete).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new MaterialDialog.Builder(MainActivity.this)
-                        .content("擦除手绘")
-                        .positiveText("确认")
-                        .callback(new MaterialDialog.ButtonCallback() {
-                            @Override
-                            public void onPositive(MaterialDialog dialog) {
-                                viewColor.setBackgroundColor(Color.BLACK);
-                                mDrawingBoardView.erase();
-                            }
-                        })
-                        .build().show();
-            }
-        });
-        findViewById(R.id.bt_save).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mDrawingBoardView.getPaths().size() == 0) {
-                    Toast.makeText(MainActivity.this, "你还没有手绘", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                bitmap = mDrawingBoardView.getDrawBitmap();
-                startActivity(new Intent(MainActivity.this,ImageActivity.class));
-
-            }
-        });
-
-       final ImageView ivBrush =  findViewById(R.id.iv_brush);
-       final ImageView ivEraser =  findViewById(R.id.iv_eraser);
-        ivBrush.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (ivBrush.getAlpha()<1f) {
-                    ivBrush.setAlpha(1f);
-                    ivEraser.setAlpha(0.5f);
-                }
-                mColorPicker.setColor(mDrawingBoardView.getStrokeColor());
-                showPopup(v,DrawingBoardView.STROKE);
-            }
-        });
-
-        ivEraser.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (ivEraser.getAlpha()<1f) {
-                    ivEraser.setAlpha(1f);
-                    ivBrush.setAlpha(0.5f);
-                }
-                showPopup(v,DrawingBoardView.ERASER);
-            }
-        });
-
-        viewColor = findViewById(R.id.view_color);
         initPopuWindowLayout();
-        mDrawingBoardView.setPickColorListener(new DrawingBoardView.OnPickColorListener() {
+
+        drawingBoardView.setPickColorListener(new DrawingBoardView.OnPickColorListener() {
             @Override
             public void onPickColor(int color) {
                 viewColor.setBackgroundColor(color);
@@ -230,11 +148,76 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
+
+    @OnClick({R.id.bt_draw_sketch, R.id.bt_draw_colours, R.id.bt_zoom_up, R.id.bt_zoom_down, R.id.bt_save, R.id.iv_image_selector, R.id.iv_delete, R.id.iv_eraser, R.id.iv_brush, R.id.iv_undo, R.id.iv_redo})
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.bt_draw_sketch:
+                drawingBoardView.drawSketch();
+                break;
+            case R.id.bt_draw_colours:
+                drawingBoardView.drawColours();
+                break;
+            case R.id.iv_undo:
+                drawingBoardView.undo();
+                break;
+            case R.id.iv_redo:
+                drawingBoardView.redo();
+                break;
+            case R.id.bt_zoom_up:
+                drawingBoardView.zoomUpCanvas();
+                break;
+            case R.id.bt_zoom_down:
+                drawingBoardView.zoomDownCanvas();
+                break;
+            case R.id.iv_eraser:
+                if (ivEraser.getAlpha() < 1f) {
+                    ivEraser.setAlpha(1f);
+                    ivBrush.setAlpha(0.5f);
+                }
+                showPopup(viewPopu, DrawingBoardView.ERASER);
+                break;
+            case R.id.iv_brush:
+                if (ivBrush.getAlpha() < 1f) {
+                    ivBrush.setAlpha(1f);
+                    ivEraser.setAlpha(0.5f);
+                }
+                mColorPicker.setColor(drawingBoardView.getStrokeColor());
+                showPopup(viewPopu, DrawingBoardView.STROKE);
+                break;
+
+            case R.id.bt_save:
+                if (drawingBoardView.getPaths().size() == 0) {
+                    Toast.makeText(MainActivity.this, "你还没有手绘", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                bitmap = drawingBoardView.getDrawBitmap();
+                startActivity(new Intent(MainActivity.this, ImageActivity.class));
+                break;
+            case R.id.iv_image_selector:
+                openImageSelector();
+                break;
+            case R.id.iv_delete:
+                new MaterialDialog.Builder(MainActivity.this)
+                        .content("擦除手绘")
+                        .positiveText("确认")
+                        .callback(new MaterialDialog.ButtonCallback() {
+                            @Override
+                            public void onPositive(MaterialDialog dialog) {
+                                viewColor.setBackgroundColor(Color.BLACK);
+                                drawingBoardView.erase();
+                            }
+                        })
+                        .build().show();
+                break;
+        }
+    }
+
     private ImageView strokeImageView, eraserImageView;
     private int size;
     private ColorPicker mColorPicker;
-
     private View popupLayout, popupEraserLayout;
+
     private void initPopuWindowLayout() {
 
         // Inflate the popup_layout.xml
@@ -265,17 +248,18 @@ public class MainActivity extends AppCompatActivity {
         mColorPicker.setOnColorChangedListener(new ColorPicker.OnColorChangedListener() {
             @Override
             public void onColorChanged(int color) {
-                mDrawingBoardView.setStrokeColor(color);
+                drawingBoardView.setStrokeColor(color);
                 viewColor.setBackgroundColor(color);
             }
         });
-        mColorPicker.setColor(mDrawingBoardView.getStrokeColor());
-        mColorPicker.setOldCenterColor(mDrawingBoardView.getStrokeColor());
+        mColorPicker.setColor(drawingBoardView.getStrokeColor());
+        mColorPicker.setOldCenterColor(drawingBoardView.getStrokeColor());
     }
 
 
     private int seekBarStrokeProgress, seekBarEraserProgress;
     private int oldColor;
+
     // The method that displays the popup.
     private void showPopup(View anchor, final int eraserOrStroke) {
 
@@ -355,10 +339,9 @@ public class MainActivity extends AppCompatActivity {
             seekBarEraserProgress = progress;
         }
 
-        mDrawingBoardView.setSize(newSize, eraserOrStroke);
-        Log.e("PPP","newSize:"+newSize+" , eraserOrStroke:"+eraserOrStroke);
+        drawingBoardView.setSize(newSize, eraserOrStroke);
+        Log.e("PPP", "newSize:" + newSize + " , eraserOrStroke:" + eraserOrStroke);
     }
-
 
 
     public void openImageSelector() {
@@ -390,8 +373,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == ImageSelector.IMAGE_REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
@@ -406,7 +387,7 @@ public class MainActivity extends AppCompatActivity {
 
                             @Override
                             public void onResourceReady(Bitmap bitmap, GlideAnimation glideAnimation) {
-                                mDrawingBoardView.setDrawBgBitmap(bitmap);
+                                drawingBoardView.setDrawBgBitmap(bitmap);
                             }
 
                         });
@@ -415,7 +396,18 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
-
-
+    @Override
+    public void onBackPressed() {
+        new MaterialDialog.Builder(MainActivity.this)
+                .content("是否退出应用 ？")
+                .positiveText("确认")
+                .negativeText("取消")
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
+                        finish();
+                    }
+                })
+                .build().show();
+    }
 }

@@ -244,7 +244,7 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
             isDrawPathDatas = false;
             mZoomCenterX = event.getX() / mZoomFactor + mClipBoundsRect.left;
             mZoomCenterY = event.getY() / mZoomFactor + mClipBoundsRect.top;
-            zoomCanvas(true);
+            zoomUpCanvas();
             return true;
         }
 
@@ -562,14 +562,32 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
     }
 
     /**
-     * 缩放画布
+     * 放大画布
      *
-     * @param isZoomUp
      */
-    public void zoomCanvas(boolean isZoomUp) {
-        zoomCanvas(isZoomUp, 1.5f);
+    public void zoomUpCanvas() {
+        zoomCanvas(true, 1.5f);
     }
 
+    /**
+     * 缩小画布
+     *
+     */
+    public void zoomDownCanvas() {
+        zoomCanvas(false, 1.5f);
+    }
+
+
+    /**
+     * 快速缩放画布
+     *
+     */
+    public void zoomUpQuickCanvas() {
+        zoomCanvas(true, MAX_ZOOM_FACTOR);
+    }
+    public void zoomDownQuickCanvas() {
+        zoomCanvas(false, MAX_ZOOM_FACTOR);
+    }
     /**
      * 快速缩放画布
      *
