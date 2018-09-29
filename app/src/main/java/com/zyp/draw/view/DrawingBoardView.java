@@ -10,7 +10,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.PaintFlagsDrawFilter;
 import android.graphics.Path;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.os.Build;
 import android.support.annotation.NonNull;
@@ -37,7 +39,7 @@ import jp.co.cyberagent.android.gpuimage.GPUImageSketchFilter;
  * Created by zhangyiipeng on 2018/7/6.
  */
 
-public class DrawingBoardView extends FrameLayout implements View.OnTouchListener {
+public class DrawingBoardView extends FrameLayout {
 
     public static final String TAG = "DrawingBoardView";
 
@@ -46,7 +48,7 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
     public static final int DEFAULT_STROKE_SIZE = 7;
     public static final int DEFAULT_ERASER_SIZE = 50;
     //画布最大缩放比率
-    private static float MAX_ZOOM_FACTOR = 10f;
+    private static float MAX_ZOOM_FACTOR = 40f;
     //画布最小缩放比率
     private static float MIN_ZOOM_FACTOR = 0.8f;
     //touch move canvas rate
@@ -87,6 +89,8 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
     private boolean isDrawPath = false;
     private ObjectAnimator mPreviewViewHideAnimator;
     private ObjectAnimator mPreviewViewShowAnimator;
+    private float mFocusX;
+    private float mFocusY;
 
     public DrawingBoardView(@NonNull Context context) {
         this(context, null);
@@ -103,19 +107,25 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
 
     private void init() {
         setWillNotDraw(false);
-        setOnTouchListener(this);
+//        setBackgroundColor(Color.WHITE);
+//        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         //默认画笔
-        mPaint = new Paint();
+        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
         //设置画笔抗锯齿和抗抖动
         mPaint.setAntiAlias(true);
-        mPaint.setDither(true);
         mPaint.setStyle(Paint.Style.STROKE); //设置画笔为实心
         mPaint.setStrokeCap(Paint.Cap.ROUND); //设置画笔笔触为圆形
         mPaint.setStrokeJoin(Paint.Join.ROUND); //设置画笔接触点为圆形
         mPaint.setStrokeWidth(DEFAULT_STROKE_SIZE);  //画笔的宽度
         mPaint.setColor(strokeColor); //画笔的颜色
         //绘制画笔
-        mDrawPaint = new Paint(mPaint);
+        mDrawPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
+        mDrawPaint.setAntiAlias(true);
+        mDrawPaint.setStyle(Paint.Style.STROKE); //设置画笔为实心
+        mDrawPaint.setStrokeCap(Paint.Cap.ROUND); //设置画笔笔触为圆形
+        mDrawPaint.setStrokeJoin(Paint.Join.ROUND); //设置画笔接触点为圆形
+        mDrawPaint.setStrokeWidth(DEFAULT_STROKE_SIZE);  //画笔的宽度
+        mDrawPaint.setColor(strokeColor); //画笔的颜色
         //绘制路径
         mDrawPath = new Path();
         //蒙层画笔
@@ -164,7 +174,7 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
     private float moveY;
 
     @Override
-    public boolean onTouch(View v, MotionEvent event) {
+    public boolean onTouchEvent(MotionEvent event) {
         mScaleGestureDetector.onTouchEvent(event);
         if (mGestureDetector.onTouchEvent(event)) {
             return true;
@@ -224,6 +234,9 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
                 }
                 Log.d(TAG, "isDrawPath: " + isDrawPath);
                 if (isDrawPath) {
+                    if (mDrawCanvas != null){
+                        mDrawCanvas.drawPath(mDrawPath, mDrawPaint);
+                    }
                     isDrawPath = false;
                     undoDrawPathDatas.clear();
                     isRedo = false;
@@ -255,6 +268,7 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
     }
 
 
+    private Matrix mScaleMatrix = new Matrix();
     private float mZoomFactor = 1.0f;
     private float mZoomCenterX = -1.0f;
     private float mZoomCenterY = -1.0f;
@@ -272,8 +286,15 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
             mZoomFactor = Math.max(MIN_ZOOM_FACTOR, Math.min(mZoomFactor, MAX_ZOOM_FACTOR));
             mZoomFactor = mZoomFactor > MAX_ZOOM_FACTOR ? MAX_ZOOM_FACTOR : mZoomFactor < MIN_ZOOM_FACTOR ? MIN_ZOOM_FACTOR : mZoomFactor;
 
+            mFocusX = detector.getFocusX();
+            mFocusY = detector.getFocusY();
+
             mZoomCenterX = detector.getFocusX() / mZoomFactor + mClipBoundsRect.left;
             mZoomCenterY = detector.getFocusY() / mZoomFactor + mClipBoundsRect.top;
+
+
+
+            mScaleMatrix.postScale(scaleFactor,scaleFactor, mFocusX, mFocusY);
 
             Log.w(TAG, "mZoomCenterX:" + mZoomCenterX + " , mZoomCenterY:" + mZoomCenterY);
 
@@ -303,6 +324,7 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
     private float ratioCenterY;
     @Override
     public void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
 
         if (mDrawBitmap == null || isDrawPathDatas) {
             //创建绘制bitmap
@@ -312,23 +334,18 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
             mBottomBitmap.eraseColor(Color.WHITE);
             //绘制Canvas
             mDrawCanvas = new Canvas(mDrawBitmap);
-
+            //Canvas抗抗锯齿
+            mDrawCanvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
             //计算初始的中心点坐标
             calculateXY();
         }
 
         canvas.save();
         //画布缩放
+        Log.w(TAG, "mZoomCenterX:" + mZoomCenterX + " , mZoomCenterY:" + mZoomCenterY);
         canvas.scale(mZoomFactor, mZoomFactor, mZoomCenterX, mZoomCenterY);
 
-        Log.d(TAG, "isDrawPathDatas:" + isDrawPathDatas + " , allDrawPathDatas:" + allDrawPathDatas.size());
-        if (isDrawPathDatas) {
-            for (DrawPathData drawPathData : allDrawPathDatas) {
-                mDrawCanvas.drawPath(drawPathData.getPath(), drawPathData.getPaint());
-            }
-        } else {
-            mDrawCanvas.drawPath(mDrawPath, mDrawPaint);
-        }
+
 
         // canvas 放大或縮小後，drawRect會產生偏移,你要计算缩放比例，getClipBounds能得到两个顶点的坐标, 根据两个顶点的坐标的比例来确定坐标
         canvas.getClipBounds(mClipBoundsRect);
@@ -357,6 +374,14 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
         if (!isLongPress) {
             canvas.drawRect(mClipBoundsRect, mCoverPaint);//蒙层
             canvas.drawBitmap(mDrawBitmap, 0, 0, null);//绘画
+            Log.d(TAG, "isDrawPathDatas:" + isDrawPathDatas + " , allDrawPathDatas:" + allDrawPathDatas.size());
+            if (isDrawPathDatas) {
+                for (DrawPathData drawPathData : allDrawPathDatas) {
+                    canvas.drawPath(drawPathData.getPath(), drawPathData.getPaint());
+                }
+            } else {
+                canvas.drawPath(mDrawPath, mDrawPaint);
+            }
         }
 
         canvas.restore();
@@ -365,7 +390,7 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
             //绘制右上角的预览区域
             mPreviewRegionView.drawPreviewRegion(mDrawBitmap, bgBitmap, bgBitmapTranslateX, bgBitmapTranslateY, mClipBoundsRect, 4.0f);
         }
-        super.onDraw(canvas);
+
     }
 
     private int bgBitmapTranslateX = 0;
@@ -661,7 +686,8 @@ public class DrawingBoardView extends FrameLayout implements View.OnTouchListene
             mZoomCenterX += MOVE_CANVAS_RATE * mx;
             mZoomCenterY += MOVE_CANVAS_RATE * my;
         }
-        mPreviewRegionView.moveDestView(mClipBoundsRect, PREVIEW_SCALE_RATE);
+        Log.e(TAG, "==> mZoomCenterX : " + mZoomCenterX + " ,mZoomCenterY : "+mZoomCenterY);
+                mPreviewRegionView.moveDestView(mClipBoundsRect, PREVIEW_SCALE_RATE);
 
         invalidate();
 
