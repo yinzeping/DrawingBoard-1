@@ -89,8 +89,6 @@ public class DrawingBoardView extends FrameLayout {
     private boolean isDrawPath = false;
     private ObjectAnimator mPreviewViewHideAnimator;
     private ObjectAnimator mPreviewViewShowAnimator;
-    private float mFocusX;
-    private float mFocusY;
 
     public DrawingBoardView(@NonNull Context context) {
         this(context, null);
@@ -155,9 +153,25 @@ public class DrawingBoardView extends FrameLayout {
                         initPreviewRegionView();
 
                         initColorPickView();
+
+                        showPreviewRegionView();
                     }
 
                 });
+
+    }
+
+    /**
+     * 获取当前已经缩放的比例
+     *
+     * @return 因为x方向和y方向比例相同，所以只返回x方向的缩放比例即可
+     */
+    private float getZoomFactor() {
+        if (mScaleMatrix == null)
+            return 1;
+        float[] values = new float[9];
+        mScaleMatrix.getValues(values);
+        return values[Matrix.MSCALE_X];
 
     }
 
@@ -167,27 +181,40 @@ public class DrawingBoardView extends FrameLayout {
     private float preMoveX;
     private float preMoveY;
 
-    private float touchX;
-    private float touchY;
 
-    private float moveX;
-    private float moveY;
+    private int mLastPoint;
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         mScaleGestureDetector.onTouchEvent(event);
-        if (mGestureDetector.onTouchEvent(event)) {
-            return true;
-        }
+        mGestureDetector.onTouchEvent(event);
 
-        touchX = event.getX() / mZoomFactor + mClipBoundsRect.left;
-        touchY = event.getY() / mZoomFactor + mClipBoundsRect.top;
+        float touchX = 0;
+        float touchY = 0;
+        //获得多点个数，也叫屏幕上手指的个数
+        int pointCount = event.getPointerCount();
 
-        //如果多点触摸return
-        if (event.getPointerCount() > 1) {
-            preMotionEvent = -1;
-            return true;
+        if (pointCount > 1) {
+            for (int i = 0; i < pointCount; i++) {
+                touchX += event.getX(i);
+                touchY += event.getY(i);
+            }
+
+            //求出中心点的位置
+            touchX /= pointCount;
+            touchY /= pointCount;
+
+        } else {
+            touchX = event.getX() / getZoomFactor() + mClipBoundsRect.left;
+            touchY = event.getY() / getZoomFactor() + mClipBoundsRect.top;
         }
+        //如果手指的数量发生了改变，则不移动
+        if (mLastPoint != pointCount) {
+            preMoveX = touchX;
+            preMoveY = touchY;
+        }
+        mLastPoint = pointCount;
+
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 preMotionEvent = MotionEvent.ACTION_DOWN;
@@ -203,14 +230,18 @@ public class DrawingBoardView extends FrameLayout {
                 if ((preMotionEvent == MotionEvent.ACTION_DOWN ||
                         preMotionEvent == MotionEvent.ACTION_MOVE)) {
                     preMotionEvent = MotionEvent.ACTION_MOVE;
-                    moveX = touchX - preMoveX;
-                    moveY = touchY - preMoveY;
+                    float moveX = touchX - preMoveX;
+                    float moveY = touchY - preMoveY;
 
                     colorPick(touchX, touchY, event.getX(), event.getY());
-
-                    if (Math.sqrt(moveX * moveX + moveY * moveY) > 5) {
+                    double d = Math.sqrt(moveX * moveX + moveY * moveY);
+                    if (d > 5) {
                         if (!isLongPress) {
-                            mDrawPath.quadTo(preMoveX, preMoveY, (touchX + preMoveX) / 2, (touchY + preMoveY) / 2);
+                            if (pointCount > 1) {
+                                mScaleMatrix.postTranslate(moveX, moveY);
+                            }else {
+                                mDrawPath.quadTo(preMoveX, preMoveY, (touchX + preMoveX) / 2, (touchY + preMoveY) / 2);
+                            }
                             isDrawPathDatas = false;
                             isDrawPath = true;
                             invalidate();
@@ -225,7 +256,6 @@ public class DrawingBoardView extends FrameLayout {
                 break;
             case MotionEvent.ACTION_UP:
                 preMotionEvent = MotionEvent.ACTION_UP;
-
                 if (isLongPress) {
                     isLongPress = false;
                     hideColorPickView();
@@ -234,7 +264,7 @@ public class DrawingBoardView extends FrameLayout {
                 }
                 Log.d(TAG, "isDrawPath: " + isDrawPath);
                 if (isDrawPath) {
-                    if (mDrawCanvas != null){
+                    if (mDrawCanvas != null && pointCount==1) {
                         mDrawCanvas.drawPath(mDrawPath, mDrawPaint);
                     }
                     isDrawPath = false;
@@ -286,17 +316,15 @@ public class DrawingBoardView extends FrameLayout {
             mZoomFactor = Math.max(MIN_ZOOM_FACTOR, Math.min(mZoomFactor, MAX_ZOOM_FACTOR));
             mZoomFactor = mZoomFactor > MAX_ZOOM_FACTOR ? MAX_ZOOM_FACTOR : mZoomFactor < MIN_ZOOM_FACTOR ? MIN_ZOOM_FACTOR : mZoomFactor;
 
-            mFocusX = detector.getFocusX();
-            mFocusY = detector.getFocusY();
-
-            mZoomCenterX = detector.getFocusX() / mZoomFactor + mClipBoundsRect.left;
-            mZoomCenterY = detector.getFocusY() / mZoomFactor + mClipBoundsRect.top;
-
-
-
-            mScaleMatrix.postScale(scaleFactor,scaleFactor, mFocusX, mFocusY);
+            float mFocusX = detector.getFocusX();
+            float mFocusY = detector.getFocusY();
 
             Log.w(TAG, "mZoomCenterX:" + mZoomCenterX + " , mZoomCenterY:" + mZoomCenterY);
+
+            mScaleMatrix.postScale(scaleFactor, scaleFactor, mFocusX, mFocusY);
+
+            mZoomCenterX = mFocusX / getZoomFactor() + mClipBoundsRect.left;
+            mZoomCenterY = mFocusY / getZoomFactor() + mClipBoundsRect.top;
 
             if (mZoomFactor > 1.0f) {
                 showPreviewRegionView();
@@ -322,6 +350,7 @@ public class DrawingBoardView extends FrameLayout {
 
     private float ratioCenterX;
     private float ratioCenterY;
+
     @Override
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -343,8 +372,7 @@ public class DrawingBoardView extends FrameLayout {
         canvas.save();
         //画布缩放
         Log.w(TAG, "mZoomCenterX:" + mZoomCenterX + " , mZoomCenterY:" + mZoomCenterY);
-        canvas.scale(mZoomFactor, mZoomFactor, mZoomCenterX, mZoomCenterY);
-
+        canvas.setMatrix(mScaleMatrix);
 
 
         // canvas 放大或縮小後，drawRect會產生偏移,你要计算缩放比例，getClipBounds能得到两个顶点的坐标, 根据两个顶点的坐标的比例来确定坐标
@@ -397,6 +425,7 @@ public class DrawingBoardView extends FrameLayout {
     private int bgBitmapTranslateY = 0;
     private int drawBitmapTranslateX = 0;
     private int drawBitmapTranslateY = 0;
+
     private void calculateXY() {
         if (!isDrawPathDatas) {
             mClipBoundsRect = new Rect(0, 0, getWidth(), getHeight());
@@ -417,6 +446,7 @@ public class DrawingBoardView extends FrameLayout {
     }
 
     private OnPickColorListener mPickColorListener;
+
     public void setPickColorListener(OnPickColorListener listener) {
         this.mPickColorListener = listener;
     }
@@ -426,6 +456,7 @@ public class DrawingBoardView extends FrameLayout {
     }
 
     private OnUndoRedoListener undoRedoListener;
+
     public void setOnUndoRedoListener(OnUndoRedoListener listener) {
         this.undoRedoListener = listener;
     }
@@ -456,7 +487,7 @@ public class DrawingBoardView extends FrameLayout {
      * 显示预览view
      */
     private synchronized void showPreviewRegionView() {
-        if (mPreviewViewShowAnimator == null){
+        if (mPreviewViewShowAnimator == null) {
             mPreviewViewShowAnimator = ObjectAnimator.ofFloat(mPreviewRegionView, "alpha", 0f, 1f);
             mPreviewViewShowAnimator.setDuration(500);
         }
@@ -514,11 +545,12 @@ public class DrawingBoardView extends FrameLayout {
 
     /**
      * 显示取色view
-     * @param eventX 屏幕实际触摸点x
-     * @param eventY 屏幕实际触摸点y
-     * @param pickBitmapWidth 取色bitmap width
+     *
+     * @param eventX           屏幕实际触摸点x
+     * @param eventY           屏幕实际触摸点y
+     * @param pickBitmapWidth  取色bitmap width
      * @param pickBitmapHeight 取色bitmap height
-     * @param pickBitmap 取色bitmap
+     * @param pickBitmap       取色bitmap
      */
     private void showColorPickView(float eventX, float eventY, int pickBitmapWidth, int pickBitmapHeight, Bitmap pickBitmap) {
         // ColorPickView跟随手指移动，位置在手指的正上方，若想恰好在手指触摸位置的下方，可以把 *1.5f 改为 /2.0f
@@ -546,6 +578,7 @@ public class DrawingBoardView extends FrameLayout {
 
     /**
      * 获取触摸点颜色及bitmap
+     *
      * @param touchX
      * @param touchY
      * @param eventX
@@ -621,7 +654,6 @@ public class DrawingBoardView extends FrameLayout {
     public void zoomQuickCanvas(boolean isZoomUp) {
         zoomCanvas(isZoomUp, MAX_ZOOM_FACTOR);
     }
-
     /**
      * 缩放画布
      * @param isZoomUp
@@ -671,6 +703,7 @@ public class DrawingBoardView extends FrameLayout {
 
     /**
      * 移动画布
+     *
      * @param mx
      * @param my
      */
@@ -679,15 +712,9 @@ public class DrawingBoardView extends FrameLayout {
         //移动canvas时需要reset path ，因为 invalidate()会绘制最后一笔path
         mDrawPath.reset();
 
-        if (mZoomFactor > 2) {
-            mZoomCenterX += MOVE_CANVAS_RATE * mx / mZoomFactor;//移动速率和缩放比率相关
-            mZoomCenterY += MOVE_CANVAS_RATE * my / mZoomFactor;
-        } else {
-            mZoomCenterX += MOVE_CANVAS_RATE * mx;
-            mZoomCenterY += MOVE_CANVAS_RATE * my;
-        }
-        Log.e(TAG, "==> mZoomCenterX : " + mZoomCenterX + " ,mZoomCenterY : "+mZoomCenterY);
-                mPreviewRegionView.moveDestView(mClipBoundsRect, PREVIEW_SCALE_RATE);
+        mScaleMatrix.postTranslate(mx*getZoomFactor(),my*getZoomFactor());
+
+        mPreviewRegionView.moveDestView(mClipBoundsRect, PREVIEW_SCALE_RATE);
 
         invalidate();
 
@@ -772,6 +799,7 @@ public class DrawingBoardView extends FrameLayout {
 
 
     private boolean isDrawSketch;
+
     /**
      * 绘制素描
      */
@@ -809,6 +837,7 @@ public class DrawingBoardView extends FrameLayout {
      * @param duration
      */
     private int alpha = 0;
+
     private void sketchSwitchAnim(long duration) {
         ValueAnimator animator = ValueAnimator.ofInt(255, 0);
         animator.setDuration(duration);
@@ -825,6 +854,7 @@ public class DrawingBoardView extends FrameLayout {
     }
 
     private Bitmap bgBitmap;
+
     public void setDrawBgBitmap(Bitmap bitmap) {
         erase();
 
@@ -876,6 +906,7 @@ public class DrawingBoardView extends FrameLayout {
 
     private int strokeSize = DEFAULT_STROKE_SIZE;
     private int eraserSize = DEFAULT_ERASER_SIZE;
+
     public void setSize(int size, int eraserOrStroke) {
         switch (eraserOrStroke) {
             case ERASER:
@@ -893,6 +924,7 @@ public class DrawingBoardView extends FrameLayout {
 
     /**
      * 设置画笔颜色
+     *
      * @param color
      */
     public void setStrokeColor(int color) {
@@ -902,6 +934,7 @@ public class DrawingBoardView extends FrameLayout {
 
     /**
      * 获取当前画笔颜色
+     *
      * @return
      */
     public int getStrokeColor() {
