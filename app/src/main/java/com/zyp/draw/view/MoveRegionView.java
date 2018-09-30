@@ -31,7 +31,7 @@ public class MoveRegionView extends RelativeLayout implements View.OnTouchListen
     }
 
     public interface OnTouchMoveListener {
-        void onTouchMove(float mx, float my);
+        void onTouchMove(float mx, float my,boolean isMovind);
     }
 
     private OnTouchMoveListener mTouchMoveListener;
@@ -67,7 +67,7 @@ public class MoveRegionView extends RelativeLayout implements View.OnTouchListen
                     mCurrentMotionEvent = MotionEvent.ACTION_MOVE;
 
                     if (mTouchMoveListener != null && mStartTouchX != 0 && mStartTouchY != 0) {
-                        mTouchMoveListener.onTouchMove(touchX - mStartTouchX, touchY - mStartTouchY);
+                        mTouchMoveListener.onTouchMove(touchX - mStartTouchX, touchY - mStartTouchY,true);
                     }
 
                     mStartTouchX = touchX;
@@ -78,6 +78,10 @@ public class MoveRegionView extends RelativeLayout implements View.OnTouchListen
 
             case MotionEvent.ACTION_UP:
                 mCurrentMotionEvent = MotionEvent.ACTION_UP;
+                if (mTouchMoveListener != null && mStartTouchX != 0 && mStartTouchY != 0) {
+                    mTouchMoveListener.onTouchMove(0, 0,false);
+                }
+
                 mStartTouchX = 0;
                 mStartTouchY = 0;
                 break;

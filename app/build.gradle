@@ -45,4 +45,6 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
 
 //    implementation 'com.github.chrisbanes:PhotoView:+'
+
+    compile 'com.github.Almeros:android-gesture-detectors:v1.0'
 }

@@ -93,8 +93,8 @@ public class MainActivity extends AppCompatActivity {
 
         ivTouch.setTouchMoveListener(new MoveRegionView.OnTouchMoveListener() {
             @Override
-            public void onTouchMove(float mx, float my) {
-                drawingBoardView.moveCanvas(mx, my);
+            public void onTouchMove(float mx, float my,boolean isMoving) {
+                drawingBoardView.moveCanvas(mx, my,isMoving);
 
             }
         });

@@ -23,10 +23,11 @@ import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
+
+import com.almeros.android.multitouch.RotateGestureDetector;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -89,6 +90,8 @@ public class DrawingBoardView extends FrameLayout {
     private boolean isDrawPath = false;
     private ObjectAnimator mPreviewViewHideAnimator;
     private ObjectAnimator mPreviewViewShowAnimator;
+    private RotateGestureDetector mRotateGestureDetector;
+    private float mMoveX;
 
     public DrawingBoardView(@NonNull Context context) {
         this(context, null);
@@ -117,13 +120,7 @@ public class DrawingBoardView extends FrameLayout {
         mPaint.setStrokeWidth(DEFAULT_STROKE_SIZE);  //画笔的宽度
         mPaint.setColor(strokeColor); //画笔的颜色
         //绘制画笔
-        mDrawPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
-        mDrawPaint.setAntiAlias(true);
-        mDrawPaint.setStyle(Paint.Style.STROKE); //设置画笔为实心
-        mDrawPaint.setStrokeCap(Paint.Cap.ROUND); //设置画笔笔触为圆形
-        mDrawPaint.setStrokeJoin(Paint.Join.ROUND); //设置画笔接触点为圆形
-        mDrawPaint.setStrokeWidth(DEFAULT_STROKE_SIZE);  //画笔的宽度
-        mDrawPaint.setColor(strokeColor); //画笔的颜色
+        mDrawPaint = new Paint(mPaint);
         //绘制路径
         mDrawPath = new Path();
         //蒙层画笔
@@ -135,7 +132,7 @@ public class DrawingBoardView extends FrameLayout {
 
         mScaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleGestureListener());
         mGestureDetector = new GestureDetector(getContext(), new GestureListener());
-
+        mRotateGestureDetector = new RotateGestureDetector(getContext(), new RotateGestureDetectorListener());
         getViewTreeObserver().addOnGlobalLayoutListener(
                 new ViewTreeObserver.OnGlobalLayoutListener() {
 
@@ -153,8 +150,6 @@ public class DrawingBoardView extends FrameLayout {
                         initPreviewRegionView();
 
                         initColorPickView();
-
-                        showPreviewRegionView();
                     }
 
                 });
@@ -166,7 +161,7 @@ public class DrawingBoardView extends FrameLayout {
      *
      * @return 因为x方向和y方向比例相同，所以只返回x方向的缩放比例即可
      */
-    private float getZoomFactor() {
+    private float getZoomRate() {
         if (mScaleMatrix == null)
             return 1;
         float[] values = new float[9];
@@ -174,6 +169,45 @@ public class DrawingBoardView extends FrameLayout {
         return values[Matrix.MSCALE_X];
 
     }
+
+    /**
+     * 获取当前旋转角度
+     *
+     */
+    private float getRotationDegrees() {
+        if (mScaleMatrix == null)
+            return 0;
+        float[] values = new float[9];
+        mScaleMatrix.getValues(values);
+        return values[Matrix.MSKEW_X];
+
+    }
+
+
+    private class Point{
+        public float x;
+        public float y;
+        public Point(float x, float y) {
+            this.x = x;
+            this.y = y;
+        }
+
+    }
+
+
+    private Point calcNewPoint(Point p, Point pCenter, float angle) {
+        // calc arc
+        float l = (float) ((angle * Math.PI) / 180);
+        //sin/cos value
+        float cosv = (float) Math.cos(l);
+        float sinv = (float) Math.sin(l);
+
+        // calc new point
+        float newX = (float) ((p.x - pCenter.x) * cosv - (p.y - pCenter.y) * sinv + pCenter.x);
+        float newY = (float) ((p.x - pCenter.x) * sinv + (p.y - pCenter.y) * cosv + pCenter.y);
+        return new Point(newX, newY);
+    }
+
 
 
     private int preMotionEvent = -1;
@@ -184,9 +218,12 @@ public class DrawingBoardView extends FrameLayout {
 
     private int mLastPoint;
 
+    private float centerX;
+    private float centerY;
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         mScaleGestureDetector.onTouchEvent(event);
+        mRotateGestureDetector.onTouchEvent(event);
         mGestureDetector.onTouchEvent(event);
 
         float touchX = 0;
@@ -204,9 +241,22 @@ public class DrawingBoardView extends FrameLayout {
             touchX /= pointCount;
             touchY /= pointCount;
 
+            centerX = touchX;
+            centerY = touchY;
+
         } else {
-            touchX = event.getX() / getZoomFactor() + mClipBoundsRect.left;
-            touchY = event.getY() / getZoomFactor() + mClipBoundsRect.top;
+            touchX = event.getX() / getZoomRate() + mClipBoundsRect.left;
+            touchY = event.getY() / getZoomRate() + mClipBoundsRect.top;
+
+//           float cx = centerX / getZoomRate() + mClipBoundsRect.left;
+//           float cy = centerY / getZoomRate() + mClipBoundsRect.top;
+//            final float rotationDegrees = (float) (getRotationDegrees() * 180 / Math.PI);
+//            Log.e(TAG, "rotationDegrees :"+rotationDegrees);
+//            final Point point = calcNewPoint(new Point(touchX, touchY), new Point(centerX, centerY), rotationDegrees);
+//
+//            touchX = point.x;
+//            touchY = point.y;
+
         }
         //如果手指的数量发生了改变，则不移动
         if (mLastPoint != pointCount) {
@@ -219,8 +269,6 @@ public class DrawingBoardView extends FrameLayout {
             case MotionEvent.ACTION_DOWN:
                 preMotionEvent = MotionEvent.ACTION_DOWN;
 
-                mDrawPath.reset();
-
                 preMoveX = touchX;
                 preMoveY = touchY;
                 mDrawPath.moveTo(touchX, touchY);
@@ -230,15 +278,15 @@ public class DrawingBoardView extends FrameLayout {
                 if ((preMotionEvent == MotionEvent.ACTION_DOWN ||
                         preMotionEvent == MotionEvent.ACTION_MOVE)) {
                     preMotionEvent = MotionEvent.ACTION_MOVE;
-                    float moveX = touchX - preMoveX;
+                    float mMoveX = touchX - preMoveX;
                     float moveY = touchY - preMoveY;
 
                     colorPick(touchX, touchY, event.getX(), event.getY());
-                    double d = Math.sqrt(moveX * moveX + moveY * moveY);
+                    double d = Math.sqrt(mMoveX * mMoveX + moveY * moveY);
                     if (d > 5) {
-                        if (!isLongPress) {
+                        if (!isLongPress && !isMoving) {
                             if (pointCount > 1) {
-                                mScaleMatrix.postTranslate(moveX, moveY);
+                                mScaleMatrix.postTranslate(mMoveX, moveY);
                             }else {
                                 mDrawPath.quadTo(preMoveX, preMoveY, (touchX + preMoveX) / 2, (touchY + preMoveY) / 2);
                             }
@@ -264,13 +312,15 @@ public class DrawingBoardView extends FrameLayout {
                 }
                 Log.d(TAG, "isDrawPath: " + isDrawPath);
                 if (isDrawPath) {
-                    if (mDrawCanvas != null && pointCount==1) {
+                    if (!isMoving && mDrawCanvas != null && pointCount==1) {
                         mDrawCanvas.drawPath(mDrawPath, mDrawPaint);
+                        invalidate();
                     }
                     isDrawPath = false;
                     undoDrawPathDatas.clear();
                     isRedo = false;
                     allDrawPathDatas.add(new DrawPathData(new Path(mDrawPath), mDrawPaint));
+                    mDrawPath.reset();
                     isUndo = true;
                     if (undoRedoListener != null) undoRedoListener.onUndoRedo(isUndo, isRedo);
                 }
@@ -278,6 +328,7 @@ public class DrawingBoardView extends FrameLayout {
         }
         return true;
     }
+
 
     private boolean isLongPress;
 
@@ -294,6 +345,27 @@ public class DrawingBoardView extends FrameLayout {
         public void onLongPress(MotionEvent e) {
             isLongPress = true;
             invalidate();
+        }
+    }
+
+    private class RotateGestureDetectorListener implements RotateGestureDetector.OnRotateGestureListener {
+        @Override
+        public boolean onRotate(RotateGestureDetector detector) {
+            final float rotationDegreesDelta = detector.getRotationDegreesDelta();
+            Log.e(TAG,"rotationDegreesDelta : "+rotationDegreesDelta);
+//            mScaleMatrix.postRotate(-rotationDegreesDelta,centerX,centerY);
+//            invalidate();
+            return true;
+        }
+
+        @Override
+        public boolean onRotateBegin(RotateGestureDetector detector) {
+            return true;
+        }
+
+        @Override
+        public void onRotateEnd(RotateGestureDetector detector) {
+
         }
     }
 
@@ -323,14 +395,9 @@ public class DrawingBoardView extends FrameLayout {
 
             mScaleMatrix.postScale(scaleFactor, scaleFactor, mFocusX, mFocusY);
 
-            mZoomCenterX = mFocusX / getZoomFactor() + mClipBoundsRect.left;
-            mZoomCenterY = mFocusY / getZoomFactor() + mClipBoundsRect.top;
+            mZoomCenterX = mFocusX / getZoomRate() + mClipBoundsRect.left;
+            mZoomCenterY = mFocusY / getZoomRate() + mClipBoundsRect.top;
 
-            if (mZoomFactor > 1.0f) {
-                showPreviewRegionView();
-            } else {
-                hidePreviewRegionView();
-            }
 
             invalidate();
 
@@ -355,7 +422,7 @@ public class DrawingBoardView extends FrameLayout {
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if (mDrawBitmap == null || isDrawPathDatas) {
+        if (mDrawBitmap == null) {
             //创建绘制bitmap
             mDrawBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
             //创建白色的bitmap，作为绘制的最底层背景色
@@ -401,11 +468,15 @@ public class DrawingBoardView extends FrameLayout {
 
         if (!isLongPress) {
             canvas.drawRect(mClipBoundsRect, mCoverPaint);//蒙层
+            if (isDrawPathDatas){
+                mDrawCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);//绘制透明色
+            }
             canvas.drawBitmap(mDrawBitmap, 0, 0, null);//绘画
             Log.d(TAG, "isDrawPathDatas:" + isDrawPathDatas + " , allDrawPathDatas:" + allDrawPathDatas.size());
             if (isDrawPathDatas) {
                 for (DrawPathData drawPathData : allDrawPathDatas) {
                     canvas.drawPath(drawPathData.getPath(), drawPathData.getPaint());
+                    mDrawCanvas.drawPath(drawPathData.getPath(), drawPathData.getPaint());
                 }
             } else {
                 canvas.drawPath(mDrawPath, mDrawPaint);
@@ -476,11 +547,11 @@ public class DrawingBoardView extends FrameLayout {
 
                 mZoomCenterX = newRect.centerX() * 4 * ratioCenterX;
                 mZoomCenterY = newRect.centerY() * 4 * ratioCenterY;
-                invalidate();
+
             }
         });
         addView(mPreviewRegionView);
-        hidePreviewRegionView();
+        showPreviewRegionView();
     }
 
     /**
@@ -624,7 +695,7 @@ public class DrawingBoardView extends FrameLayout {
      *
      */
     public void zoomUpCanvas() {
-        zoomCanvas(true, 1.5f);
+        zoomCanvas(1.03f);
     }
 
     /**
@@ -632,7 +703,7 @@ public class DrawingBoardView extends FrameLayout {
      *
      */
     public void zoomDownCanvas() {
-        zoomCanvas(false, 1.5f);
+        zoomCanvas(0.97f);
     }
 
 
@@ -641,64 +712,43 @@ public class DrawingBoardView extends FrameLayout {
      *
      */
     public void zoomUpQuickCanvas() {
-        zoomCanvas(true, MAX_ZOOM_FACTOR);
+//        zoomCanvas(true, MAX_ZOOM_FACTOR);
     }
     public void zoomDownQuickCanvas() {
-        zoomCanvas(false, MAX_ZOOM_FACTOR);
+//        zoomCanvas(false, MAX_ZOOM_FACTOR);
     }
-    /**
-     * 快速缩放画布
-     *
-     * @param isZoomUp
-     */
-    public void zoomQuickCanvas(boolean isZoomUp) {
-        zoomCanvas(isZoomUp, MAX_ZOOM_FACTOR);
-    }
+
     /**
      * 缩放画布
-     * @param isZoomUp
      * @param scaleFactor
      */
-    public void zoomCanvas(boolean isZoomUp, float scaleFactor) {
-        float startZoomFactor = mZoomFactor;
-        if (isZoomUp) {
-            mZoomFactor *= scaleFactor;
-        } else {
-            mZoomFactor /= scaleFactor;
-        }
-        mZoomFactor = Math.max(MIN_ZOOM_FACTOR, Math.min(mZoomFactor, MAX_ZOOM_FACTOR));
-        mZoomFactor = mZoomFactor > MAX_ZOOM_FACTOR ? MAX_ZOOM_FACTOR : mZoomFactor < 1.0f ? 1.0f : mZoomFactor;
-
-        Log.d(TAG, "mZoomCenterX:" + mZoomCenterX + " , mZoomCenterY:" + mZoomCenterY);
-
-        zoomCanvasAnim(startZoomFactor, mZoomFactor);
+    public void zoomCanvas( float scaleFactor) {
+        this.mScaleFactor = scaleFactor;
+        zoomCanvasAnim();
     }
 
-    private void zoomCanvasAnim(float startZoomFactor, float endZoomFactor) {
+    private float mScaleFactor = 1;
+    private void zoomCanvasAnim() {
         if (mZoomCanvasAnimator == null) {
-            mZoomCanvasAnimator = ValueAnimator.ofFloat(startZoomFactor, endZoomFactor);
+            mZoomCanvasAnimator = ValueAnimator.ofFloat();
             mZoomCanvasAnimator.setDuration(300);
             mZoomCanvasAnimator.setInterpolator(new LinearInterpolator());
             mZoomCanvasAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    float value = (Float) animation.getAnimatedValue();
-                    mZoomFactor = value;
+
+                    mScaleMatrix.postScale(mScaleFactor,mScaleFactor,mZoomCenterX,mZoomCenterY);
+
                     mPreviewRegionView.moveDestView(mClipBoundsRect, PREVIEW_SCALE_RATE);
 
                     invalidate();
-
-                    if (mZoomFactor > 1.0f) {
-                        showPreviewRegionView();
-                    } else {
-                        hidePreviewRegionView();
-                    }
-
                 }
             });
         }
-        mZoomCanvasAnimator.setFloatValues(startZoomFactor, mZoomFactor);
-        mZoomCanvasAnimator.start();
+        mZoomCanvasAnimator.setFloatValues(10, 1);
+        if (!mZoomCanvasAnimator.isRunning()){
+            mZoomCanvasAnimator.start();
+        }
     }
 
     /**
@@ -707,12 +757,14 @@ public class DrawingBoardView extends FrameLayout {
      * @param mx
      * @param my
      */
-    public void moveCanvas(float mx, float my) {
+    private boolean isMoving;
+    public void moveCanvas(float mx, float my,boolean isMoving) {
         isDrawPathDatas = false;
+        this.isMoving = isMoving;
         //移动canvas时需要reset path ，因为 invalidate()会绘制最后一笔path
         mDrawPath.reset();
 
-        mScaleMatrix.postTranslate(mx*getZoomFactor(),my*getZoomFactor());
+        mScaleMatrix.postTranslate(mx* 2,my* 2);
 
         mPreviewRegionView.moveDestView(mClipBoundsRect, PREVIEW_SCALE_RATE);
 
@@ -792,6 +844,10 @@ public class DrawingBoardView extends FrameLayout {
         isDrawPathDatas = false;
         isRedo = false;
         isUndo = false;
+        if (mScaleMatrix != null) {
+            mScaleMatrix.reset();
+        }
+
         if (undoRedoListener != null) undoRedoListener.onUndoRedo(isUndo, isRedo);
         System.gc();
         invalidate();
@@ -890,7 +946,6 @@ public class DrawingBoardView extends FrameLayout {
 
         mZoomFactor = 1;
 
-        hidePreviewRegionView();
 
         mClipBoundsRect = new Rect(0, 0, getWidth(), getHeight());
         if (bgBitmap.getWidth() < bgBitmap.getHeight() && drawRatio < imgRatio) {
