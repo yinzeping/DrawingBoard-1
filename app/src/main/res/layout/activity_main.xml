@@ -14,163 +14,176 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical|end"
-        android:orientation="vertical">
+    <View
+        android:id="@+id/edit_set_switch"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/ic_format_indent_decrease"
+        android:layout_width="40dp"
+        android:layout_height="40dp"/>
 
-        <Button
-            android:id="@+id/bt_draw_sketch"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:text="描线"
-            android:textSize="10dp"/>
-
-        <Button
-            android:id="@+id/bt_draw_colours"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:text="绘色"
-            android:textSize="10dp"/>
-        <Button
-            android:id="@+id/bt_zoom_up"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:text="+"/>
-
-        <Button
-            android:id="@+id/bt_zoom_down"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:text="-"/>
-
-
-        <Button
-            android:id="@+id/bt_save"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:text="查看"
-            android:textSize="10dp"/>
-
-    </LinearLayout>
-
-
-    <RelativeLayout
+    <FrameLayout
+        android:id="@+id/edit_set_parent"
         android:layout_width="match_parent"
-        android:layout_height="140dp"
-        android:layout_gravity="bottom"
-        android:background="@color/gray">
-
-        <com.zyp.draw.view.MoveRegionView
-            android:id="@+id/iv_touch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-            <ImageView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_margin="20dp"
-                android:background="@mipmap/direction"/>
-
-        </com.zyp.draw.view.MoveRegionView>
-
+        android:layout_height="match_parent">
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_toRightOf="@+id/iv_touch"
+            android:layout_gravity="center_vertical|end"
             android:orientation="vertical">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true">
+            <Button
+                android:id="@+id/bt_draw_sketch"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:text="描线"
+                android:textSize="10dp"/>
 
-                <ImageView
-                    android:id="@+id/iv_image_selector"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_weight="1"
-                    android:src="@mipmap/ic_photo_dark"/>
+            <Button
+                android:id="@+id/bt_draw_colours"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:text="绘色"
+                android:textSize="10dp"/>
+            <Button
+                android:id="@+id/bt_zoom_up"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:text="+"/>
 
-                <ImageView
-                    android:id="@+id/iv_delete"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_weight="1"
-                    android:src="@mipmap/ic_delete"/>
+            <Button
+                android:id="@+id/bt_zoom_down"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:text="-"/>
 
-            </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true">
+            <Button
+                android:id="@+id/bt_save"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:text="查看"
+                android:textSize="10dp"/>
 
-                <ImageView
-                    android:id="@+id/iv_eraser"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_weight="1"
-                    android:alpha="0.5"
-                    android:src="@mipmap/ic_eraser"/>
-
-                <FrameLayout
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:id="@+id/iv_brush"
-                        android:layout_width="match_parent"
-                        android:layout_height="45dp"
-                        android:layout_weight="1"
-                        android:alpha="1"
-                        android:src="@mipmap/ic_brush"/>
-
-                    <View
-                        android:layout_gravity="center_vertical|end"
-                        android:id="@+id/view_color"
-                        android:layout_margin="5dp"
-                        android:background="@color/black"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"/>
-                </FrameLayout>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true">
-
-                <ImageView
-                    android:id="@+id/iv_undo"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_weight="1"
-                    android:alpha="0.5"
-                    android:src="@mipmap/ic_undo"/>
-
-                <ImageView
-                    android:id="@+id/iv_redo"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_weight="1"
-                    android:alpha="0.5"
-                    android:src="@mipmap/ic_redo"/>
-
-            </LinearLayout>
         </LinearLayout>
 
 
-    </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:layout_gravity="bottom"
+            android:background="@color/gray">
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1px"
-        android:id="@+id/view_popu"/>
+            <com.zyp.draw.view.MoveRegionView
+                android:id="@+id/iv_touch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_margin="20dp"
+                    android:background="@mipmap/direction"/>
+
+            </com.zyp.draw.view.MoveRegionView>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_toRightOf="@+id/iv_touch"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true">
+
+                    <ImageView
+                        android:id="@+id/iv_image_selector"
+                        android:layout_width="0dp"
+                        android:layout_height="45dp"
+                        android:layout_weight="1"
+                        android:src="@mipmap/ic_photo_dark"/>
+
+                    <ImageView
+                        android:id="@+id/iv_delete"
+                        android:layout_width="0dp"
+                        android:layout_height="45dp"
+                        android:layout_weight="1"
+                        android:src="@mipmap/ic_delete"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true">
+
+                    <ImageView
+                        android:id="@+id/iv_eraser"
+                        android:layout_width="0dp"
+                        android:layout_height="45dp"
+                        android:layout_weight="1"
+                        android:alpha="0.5"
+                        android:src="@mipmap/ic_eraser"/>
+
+                    <FrameLayout
+                        android:layout_weight="1"
+                        android:layout_width="0dp"
+                        android:layout_height="45dp"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:id="@+id/iv_brush"
+                            android:layout_width="match_parent"
+                            android:layout_height="45dp"
+                            android:layout_weight="1"
+                            android:alpha="1"
+                            android:src="@mipmap/ic_brush"/>
+
+                        <View
+                            android:layout_gravity="center_vertical|end"
+                            android:id="@+id/view_color"
+                            android:layout_margin="5dp"
+                            android:background="@color/black"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"/>
+                    </FrameLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true">
+
+                    <ImageView
+                        android:id="@+id/iv_undo"
+                        android:layout_width="0dp"
+                        android:layout_height="45dp"
+                        android:layout_weight="1"
+                        android:alpha="0.5"
+                        android:src="@mipmap/ic_undo"/>
+
+                    <ImageView
+                        android:id="@+id/iv_redo"
+                        android:layout_width="0dp"
+                        android:layout_height="45dp"
+                        android:layout_weight="1"
+                        android:alpha="0.5"
+                        android:src="@mipmap/ic_redo"/>
+
+                </LinearLayout>
+            </LinearLayout>
+
+
+        </RelativeLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:id="@+id/view_popu"/>
+    </FrameLayout>
 
 </FrameLayout>

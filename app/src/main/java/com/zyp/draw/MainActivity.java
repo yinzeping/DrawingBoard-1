@@ -76,8 +76,12 @@ public class MainActivity extends AppCompatActivity {
     ImageView ivRedo;
     @BindView(R.id.view_popu)
     View viewPopu;
-
+    @BindView(R.id.edit_set_parent)
+    View edit_set_parent;
+    @BindView(R.id.edit_set_switch)
+    View edit_set_switch;
     public static Bitmap bitmap;
+    private PopupWindow popup;
 
     @Override
     protected void onDestroy() {
@@ -149,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @OnClick({R.id.bt_draw_sketch, R.id.bt_draw_colours, R.id.bt_zoom_up, R.id.bt_zoom_down, R.id.bt_save, R.id.iv_image_selector, R.id.iv_delete, R.id.iv_eraser, R.id.iv_brush, R.id.iv_undo, R.id.iv_redo})
+    @OnClick({R.id.bt_draw_sketch, R.id.bt_draw_colours, R.id.bt_zoom_up, R.id.bt_zoom_down, R.id.bt_save, R.id.iv_image_selector, R.id.iv_delete, R.id.iv_eraser, R.id.iv_brush, R.id.iv_undo, R.id.iv_redo, R.id.edit_set_switch})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.bt_draw_sketch:
@@ -209,6 +213,18 @@ public class MainActivity extends AppCompatActivity {
                             }
                         })
                         .build().show();
+                break;
+            case R.id.edit_set_switch:
+                if(edit_set_parent.getVisibility()==View.VISIBLE){
+                    edit_set_switch.setBackgroundResource(R.drawable.ic_format_indent_increase);
+                    edit_set_parent.setVisibility(View.INVISIBLE);
+                    drawingBoardView.setShowPreview(false);
+                }else{
+                    edit_set_switch.setBackgroundResource(R.drawable.ic_format_indent_decrease);
+                    edit_set_parent.setVisibility(View.VISIBLE);
+                    drawingBoardView.setShowPreview(true);
+                }
+//                startActivity(new Intent(MainActivity.this, Main2Activity.class));
                 break;
         }
     }
@@ -271,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
         // Creating the PopupWindow
-        PopupWindow popup = new PopupWindow(this);
+        popup = new PopupWindow(this);
         popup.setContentView(isErasing ? popupEraserLayout : popupLayout);
         popup.setWidth(WindowManager.LayoutParams.WRAP_CONTENT);
         popup.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);

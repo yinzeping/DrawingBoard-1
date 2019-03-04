@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.zyp.draw.WelcomeActivity">
+
+    <ImageView
+        android:src="@mipmap/start"
+        android:scaleType="centerCrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <TextView
+        android:id="@+id/start_board"
+        android:gravity="center"
+        android:layout_marginBottom="40dp"
+        android:background="@drawable/shape_start"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:text="开始绘画"
+        android:textColor="#ffffff"
+        android:textSize="17sp"
+        android:layout_width="100dp"
+        android:layout_height="40dp" />
+</RelativeLayout>

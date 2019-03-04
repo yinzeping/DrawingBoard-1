@@ -84,6 +84,9 @@ public class DrawingBoardView extends FrameLayout {
     private ValueAnimator mZoomCanvasAnimator;
 
     private int strokeColor = Color.BLACK;
+
+    //是否显示预览的view
+    private boolean isShowPreview = false;
     //是否在绘制预览view
     private boolean isPreviewRegion = false;
     //是否绘制Path
@@ -1002,6 +1005,16 @@ public class DrawingBoardView extends FrameLayout {
 
     public Bitmap getDrawBitmap() {
         return mDrawBitmap;
+    }
+
+    public boolean isShowPreview() {
+        return isShowPreview;
+    }
+
+    public void setShowPreview(boolean isShowPreview) {
+        this.isShowPreview = isShowPreview;
+        mPreviewRegionView.setVisibility(isShowPreview?VISIBLE:INVISIBLE);
+        invalidate();
     }
 
 }
